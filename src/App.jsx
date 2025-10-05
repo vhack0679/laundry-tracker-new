@@ -27,7 +27,8 @@ import {
 } from 'lucide-react';
 
 // --- API Configuration ---
-// !!! IMPORTANT: Replace this URL with the actual URL of your PHP API script on your server.
+// !!! IMPORTANT: The API URL must use HTTPS. 
+// You need to enable a free SSL certificate on your InfinityFree hosting account for this to work.
 const API_URL = 'https://v-ruchira.rf.gd/api/api.php'; 
 
 // --- Utility Functions ---
@@ -235,7 +236,13 @@ const App = () => {
             setCustomCategories([]);
         }
     } catch (error) {
-        console.error('Failed to fetch data:', error);
+        if (error instanceof TypeError) {
+          console.error(
+            'A network error occurred. This could be due to an inactive SSL certificate on the API server, a CORS issue, or an incorrect API path. Please check the browser\'s Network tab and the troubleshooting guide.'
+          );
+        } else {
+          console.error('Failed to fetch data:', error);
+        }
     } finally {
         setLoading(false);
     }
@@ -316,7 +323,13 @@ const App = () => {
         } else {
             console.error('API error adding item:', result.error);
         }
-    } catch (error) { console.error('Error adding item:', error); }
+    } catch (error) { 
+        if (error instanceof TypeError) {
+            console.error('Network error during addItem. Please check SSL/CORS configuration.');
+        } else {
+            console.error('Error adding item:', error); 
+        }
+    }
   };
 
   const addCategory = async (e) => {
@@ -565,4 +578,6 @@ const App = () => {
 };
 
 export default App;
+
+
 
