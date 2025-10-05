@@ -27,8 +27,9 @@ import {
 } from 'lucide-react';
 
 // --- API Configuration ---
-// !!! IMPORTANT: The API URL has been changed to use insecure HTTP for testing.
-const API_URL = 'http://v-ruchira.rf.gd/api/api.php'; 
+// !!! IMPORTANT: The API URL has been changed back to secure HTTPS.
+// This will only work after you have successfully installed the SSL certificate on your server.
+const API_URL = 'https://v-ruchira.rf.gd/api/api.php'; 
 
 // --- Utility Functions ---
 
@@ -577,6 +578,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
