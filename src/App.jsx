@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { initializeApp } from 'firebase/app';
-import {
-  getAuth,
-  signInAnonymously,
-  signInWithCustomToken,
-  onAuthStateChanged,
-} from 'firebase/auth';
-// ** Firestore imports are removed **
+// ** Firebase imports are removed **
 import {
   AlertCircle,
   Plus,
@@ -37,15 +30,6 @@ import {
 // !!! IMPORTANT: Replace this URL with the actual URL of your PHP API script on your server.
 const API_URL = 'http://v-ruchira.rf.gd/api/api.php'; 
 
-// --- Firebase and Environment Configuration ---
-// Using the provided __firebase_config global variable to avoid 'import.meta' compilation errors.
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-// Initialize Firebase app for AUTHENTICATION ONLY.
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
 // --- Utility Functions ---
 
 const getTimeSince = (date) => {
@@ -63,18 +47,18 @@ const getTimeSince = (date) => {
 // --- React Components (No changes needed in these components) ---
 
 const LaundryItem = ({ item, onWear, onWash, onDelete }) => {
-  const needsWashing = item.usageCount >= 3;
-  const timeSinceWashed = getTimeSince(item.lastWashed);
+  const needsWashing = item.usage_count >= 3;
+  const timeSinceWashed = getTimeSince(item.last_washed);
 
   const getImageUrl = (item) => {
-    if (item.imageUrl && item.imageUrl.trim() !== '' && !item.imageUrl.includes('Image+Too+Large')) return item.imageUrl;
+    if (item.image_url && item.image_url.trim() !== '' && !item.image_url.includes('Image+Too+Large')) return item.image_url;
     return `https://placehold.co/150x150/e2e8f0/1a202c?text=${(item.name || 'Item').substring(0, 3)}`;
   };
 
   return (
     <div className={`p-4 rounded-xl flex items-center justify-between transition-all duration-300 ${needsWashing ? 'bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-700' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'} shadow-sm border`}>
       <div className="flex-1 flex items-center space-x-3 sm:space-x-4">
-        {item.imageUrl && item.imageUrl.trim() !== '' && !item.imageUrl.includes('Image+Too+Large') ? (
+        {item.image_url && item.image_url.trim() !== '' && !item.image_url.includes('Image+Too+Large') ? (
           <img
             src={getImageUrl(item)}
             alt={item.name}
@@ -90,7 +74,7 @@ const LaundryItem = ({ item, onWear, onWash, onDelete }) => {
         <div className="flex-1 space-y-0.5 min-w-0">
           <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-100 truncate">{item.name}</h3>
           <div className="flex flex-wrap items-center gap-x-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Worn: {item.usageCount} times</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Worn: {item.usage_count} times</span>
             <span className="h-1 w-1 rounded-full bg-slate-400 dark:bg-slate-600 hidden sm:inline"></span>
             <div className="px-1.5 py-0.5 rounded-full text-xs font-semibold flex items-center">
               <Tag size={12} className="inline mr-0.5" /> {item.category || 'Uncategorized'}
@@ -118,9 +102,9 @@ const LaundryItem = ({ item, onWear, onWash, onDelete }) => {
 };
 
 const WardrobeItem = ({ item, onWear, onWash, onDelete }) => {
-    const needsWashing = item.usageCount >= 3;
-    const timeSinceWashed = getTimeSince(item.lastWashed);
-    const imageUrl = item.imageUrl && item.imageUrl.trim() !== '' ? item.imageUrl : `https://placehold.co/150x150/e2e8f0/1a202c?text=${(item.name || 'I').substring(0, 3)}`;
+    const needsWashing = item.usage_count >= 3;
+    const timeSinceWashed = getTimeSince(item.last_washed);
+    const imageUrl = item.image_url && item.image_url.trim() !== '' ? item.image_url : `https://placehold.co/150x150/e2e8f0/1a202c?text=${(item.name || 'I').substring(0, 3)}`;
 
     return (
         <div className={`p-3 rounded-xl flex flex-col items-center text-center transition-all duration-300 ${needsWashing ? 'bg-red-50 dark:bg-red-900 border-red-300 dark:border-red-700 shadow-lg ring-2 ring-red-500/50' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-md'} border`}>
@@ -134,7 +118,7 @@ const WardrobeItem = ({ item, onWear, onWash, onDelete }) => {
             </div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mt-2 truncate w-full px-1">{item.name}</h3>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 space-y-0.5">
-                <p className="font-medium">Worn: {item.usageCount}</p>
+                <p className="font-medium">Worn: {item.usage_count}</p>
                 <p className="italic">Washed: {timeSinceWashed}</p>
             </div>
             <div className="flex space-x-2 mt-3">
@@ -196,7 +180,7 @@ const App = () => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [customCategories, setCustomCategories] = useState([]);
   const [sortBy, setSortBy] = useState('usage');
-  const [authUid, setAuthUid] = useState(null);
+  const [userId, setUserId] = useState(null); // Replaces authUid
   const [dataKey, setDataKey] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isWardrobeView, setIsWardrobeView] = useState(true);
@@ -222,19 +206,18 @@ const App = () => {
   const defaultCategories = ['Shirts', 'Pants', 'Nightwear', 'Innerwear', 'Towels', 'Bedsheets', 'Handkerchiefs'];
   const allCategories = [...defaultCategories, ...customCategories].filter((v, i, a) => a.indexOf(v) === i);
   
-  // --- NEW: Function to fetch all data from the backend ---
+  // --- Function to fetch all data from the backend ---
   const fetchAndSetData = useCallback(async (key) => {
     if (!key) return;
 
-    // FIX: Add a check to ensure the API_URL has been changed from the placeholder.
     if (API_URL === 'https://your-infinity-free-domain/api.php') {
         console.error(
             "API URL is not configured. Please edit App.jsx and replace the placeholder API_URL with your actual backend API endpoint. The application cannot fetch data without this."
         );
-        setLaundryItems([]); // Clear any existing items
+        setLaundryItems([]);
         setCustomCategories([]);
-        setLoading(false); // Stop the loading indicator
-        return; // Prevent the fetch request from being made
+        setLoading(false);
+        return;
     }
 
     setLoading(true);
@@ -253,33 +236,24 @@ const App = () => {
         }
     } catch (error) {
         console.error('Failed to fetch data:', error);
-        // Keep existing data on network failure, but clear if API returns error
     } finally {
         setLoading(false);
     }
   }, []);
 
-  // --- Auth useEffect (remains mostly the same) ---
+  // --- NEW: useEffect to set a local user ID, replacing Firebase Auth ---
   useEffect(() => {
-    const authenticate = async () => {
-      try {
-        if (initialAuthToken) await signInWithCustomToken(auth, initialAuthToken);
-        else await signInAnonymously(auth);
-      } catch (error) {
-        console.error('Firebase authentication failed:', error);
-      }
-    };
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setAuthUid(user.uid);
-        const key = localStorage.getItem('sharedDataKey') || user.uid;
-        setDataKey(key);
-        setSharedKeyInput(key);
-      } else {
-        authenticate();
-      }
-    });
-    return () => unsubscribeAuth();
+    let localUserId = localStorage.getItem('laundryTrackerUserId');
+    if (!localUserId) {
+        localUserId = crypto.randomUUID();
+        localStorage.setItem('laundryTrackerUserId', localUserId);
+    }
+    setUserId(localUserId);
+
+    // Use this local ID as the default data key
+    const key = localStorage.getItem('sharedDataKey') || localUserId;
+    setDataKey(key);
+    setSharedKeyInput(key);
   }, []);
 
   // --- Data fetching useEffect (MODIFIED) ---
@@ -301,14 +275,14 @@ const App = () => {
 
   const clearSharedKey = () => {
     localStorage.removeItem('sharedDataKey');
-    setDataKey(authUid);
-    setSharedKeyInput(authUid);
+    setDataKey(userId);
+    setSharedKeyInput(userId);
     setShowSettingsModal(false);
   };
 
   const sortedItems = [...laundryItems].sort((a, b) => {
-    if (sortBy === 'date') return (new Date(b.lastWashed) || 0) - (new Date(a.lastWashed) || 0);
-    if (sortBy === 'usage') return b.usageCount - a.usageCount;
+    if (sortBy === 'date') return (new Date(b.last_washed) || 0) - (new Date(a.last_washed) || 0);
+    if (sortBy === 'usage') return b.usage_count - a.usage_count;
     return (a.name || '').localeCompare(b.name || '');
   });
 
@@ -373,7 +347,7 @@ const App = () => {
             body: JSON.stringify({ 
                 id: item.id,
                 dataKey: dataKey,
-                updates: { usageCount: (item.usageCount || 0) + 1 }
+                updates: { usageCount: (item.usage_count || 0) + 1 }
             })
         });
         const result = await response.json();
@@ -383,7 +357,7 @@ const App = () => {
   
   const openWashModal = (item) => {
     setSelectedItem(item);
-    const date = item.lastWashed ? new Date(item.lastWashed) : new Date();
+    const date = item.last_washed ? new Date(item.last_washed) : new Date();
     setNewWashDate(date.toISOString().substring(0, 10));
     setShowWashModal(true);
   };
@@ -431,10 +405,7 @@ const App = () => {
     } catch (error) { console.error('Error deleting item:', error); }
   };
 
-  // --- The rest of the component remains the same, as it depends on local state ---
-  // (UI handlers, modals, sorting logic, etc.)
-  
-    const handleImageUpload = (e) => {
+  const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -453,11 +424,8 @@ const App = () => {
   useEffect(() => {
     const storedKey = localStorage.getItem('sharedDataKey');
     if (storedKey) setSharedKeyInput(storedKey);
-    // Customization and other local storage logic remains
   }, []);
   
-  // Omitted unchanged code for brevity... the return statement and other local UI logic
-  // should be copied from your original file as it does not need to change.
   const itemsByCategory = sortedItems.reduce((acc, item) => {
     const category = item.category || 'Uncategorized';
     if (!acc[category]) acc[category] = [];
@@ -478,7 +446,7 @@ const App = () => {
             <p className="flex items-center justify-center space-x-2">
               <Database size={16} />
               <span className="font-semibold text-slate-800 dark:text-slate-100">Data Key:</span>
-              <span className={`font-mono text-xs p-1 rounded-md ${dataKey && dataKey !== authUid ? 'bg-indigo-500 text-white' : 'bg-slate-300 dark:bg-slate-700'} break-all`}>{dataKey || 'Loading...'}</span>
+              <span className={`font-mono text-xs p-1 rounded-md ${dataKey && dataKey !== userId ? 'bg-indigo-500 text-white' : 'bg-slate-300 dark:bg-slate-700'} break-all`}>{dataKey || 'Loading...'}</span>
             </p>
           </div>
         </header>
@@ -548,7 +516,7 @@ const App = () => {
         {loading ? <div className="text-center p-8"><RefreshCw size={48} className="mx-auto animate-spin" /><p>Loading...</p></div>
           : filteredItems.length === 0 ? <div className="text-center p-8 bg-slate-100 dark:bg-slate-700 rounded-xl"><AlertCircle size={48} className="mx-auto text-yellow-500" /><p className="mt-4 font-bold">No items found!</p><p>No items in the **{selectedCategoryFilter}** category.</p></div>
           : <div className="space-y-4">
-              {dataKey !== authUid && <div className="p-3 bg-indigo-100 text-indigo-800 rounded-xl text-sm text-center"><KeyRound size={16} className="inline mr-2" />Viewing shared wardrobe: <b>{dataKey}</b></div>}
+              {dataKey !== userId && <div className="p-3 bg-indigo-100 text-indigo-800 rounded-xl text-sm text-center"><KeyRound size={16} className="inline mr-2" />Viewing shared wardrobe: <b>{dataKey}</b></div>}
               {isWardrobeView && selectedCategoryFilter === 'All' ? (
                 <div className="space-y-6">
                   {categoriesToDisplay.map(cat => <CategoryRow key={cat} category={cat} items={itemsByCategory[cat]} onWear={wearItem} onWash={openWashModal} onDelete={openDeleteModal} />)}
@@ -580,7 +548,7 @@ const App = () => {
               <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-700 rounded-xl">
                 <h4 className="flex items-center text-xl font-semibold text-indigo-600"><KeyRound size={20} className="mr-2"/> Shared Data Key</h4>
                 <p className="text-sm text-red-600 p-2 bg-red-100 rounded-lg">⚠️ Data stored under a shared key is public.</p>
-                {dataKey !== authUid ? <div><p>Viewing shared key: <b>{dataKey}</b></p><button onClick={clearSharedKey}>Revert to Private Data</button></div> : <form onSubmit={setSharedKey}><input type="text" value={sharedKeyInput} onChange={e => setSharedKeyInput(e.target.value)} placeholder="Enter shared key" className="w-full p-2 rounded-lg" /><button type="submit" disabled={sharedKeyInput.trim().length < 4}>Set Shared Key</button><p className="text-xs text-center">Your private ID: {authUid}</p></form>}
+                {dataKey !== userId ? <div><p>Viewing shared key: <b>{dataKey}</b></p><button onClick={clearSharedKey}>Revert to Private Data</button></div> : <form onSubmit={setSharedKey}><input type="text" value={sharedKeyInput} onChange={e => setSharedKeyInput(e.target.value)} placeholder="Enter shared key" className="w-full p-2 rounded-lg" /><button type="submit" disabled={sharedKeyInput.trim().length < 4}>Set Shared Key</button><p className="text-xs text-center">Your private ID: {userId}</p></form>}
               </div>
 
               <div className="space-y-3 p-4 bg-slate-50 dark:bg-slate-700 rounded-xl">
