@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
   build: {
     // This sets the target browser environment for the build.
-    // 'esnext' allows the use of modern JavaScript features,
-    // which resolves the "Unexpected token" build error you encountered on Render.
+    // 'esnext' allows the use of modern JavaScript features like 'import.meta',
+    // which resolves the build errors you were encountering on Render.
     target: 'esnext'
   }
 })
