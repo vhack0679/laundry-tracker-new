@@ -28,7 +28,7 @@ import {
 
 // --- API Configuration ---
 // !!! IMPORTANT: Replace this URL with the actual URL of your PHP API script on your server.
-const API_URL = 'http://v-ruchira.rf.gd/api/api.php'; 
+const API_URL = 'https://v-ruchira.rf.gd/api/api.php'; 
 
 // --- Utility Functions ---
 
