@@ -27,9 +27,8 @@ import {
 } from 'lucide-react';
 
 // --- API Configuration ---
-// !!! IMPORTANT: The API URL must use HTTPS. 
-// You need to enable a free SSL certificate on your InfinityFree hosting account for this to work.
-const API_URL = 'https://v-ruchira.rf.gd/api/api.php'; 
+// !!! IMPORTANT: The API URL has been changed to use insecure HTTP for testing.
+const API_URL = 'http://v-ruchira.rf.gd/api/api.php'; 
 
 // --- Utility Functions ---
 
@@ -578,6 +577,7 @@ const App = () => {
 };
 
 export default App;
+
 
 
 
